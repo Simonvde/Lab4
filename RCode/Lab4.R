@@ -1,4 +1,4 @@
-setwd("~/Desktop/Lab4")
+ setwd("~/Desktop/CSN-Labs/Lab4")
 
 library(igraph)
 
@@ -70,14 +70,14 @@ colnames(Catalan) = c("vertices","degree_2nd_moment", "mean_length")
 Catalan = Catalan[order(Catalan$vertices), ]
 plot(Catalan$vertices, Catalan$mean_length,
      xlab = "vertices", ylab = "mean dependency length")
-plot(log(Catalan$vertices), log(Catalan$mean_length),
+plot((log(Catalan$vertices)), log(Catalan$mean_length),
      xlab = "log(vertices)", ylab = "log(mean dependency length)")
 
 mean_Catalan = aggregate(Catalan, list(Catalan$vertices), mean)
 
-plot(mean_Catalan$vertices, mean_Catalan$mean_length,
+plot((mean_Catalan$vertices), mean_Catalan$mean_length,
      xlab = "vertices", ylab = "mean mean dependency length")
-plot(log(mean_Catalan$vertices), log(mean_Catalan$mean_length),
+plot((log(mean_Catalan$vertices)), log(mean_Catalan$mean_length),
      xlab = "log(vertices)", ylab = "log(mean mean dependency length)")
 
 plot(log(Catalan$vertices), log(Catalan$mean_length),
@@ -103,6 +103,18 @@ coef(nonlinear_model)
 coef(nonlinear_model)["a"]
 coef(nonlinear_model)["b"]
 
+
+#Heteroscedascety
+plot(Catalan$vertices,resid(nonlinear_model))
+plot(aggregate(resid(nonlinear_model),list(Catalan$vertices),mean))
+
+plot(aggregate(resid(nonlinear_model),list(Catalan$vertices),mean))
+plot(fitted(nonlinear_model),abs(residuals(nonlinear_model)))
+ 
+ #TODO: A residual plot against X exhibits a megaphone shape. Regress the absolute residuals against X.
+plot(Catalan$mean_length,resid(nonlinear_model))
+plot(aggregate(.1/resid(nonlinear_model),list(Catalan$mean_length),mean))
+
 #For function with no parameters: the random tree model!
 tree_metrics <- Catalan
 RSS <- sum((tree_metrics$mean_length-(tree_metrics$vertices+1)/3)^2)
@@ -118,3 +130,78 @@ AIC <- n*log(2*pi) + n*log(RSS/n) + n + 2*(p + 1)
 plot(log(Catalan$vertices), log(Catalan$mean_length),
      xlab = "log(vertices)", ylab = "log(mean dependency length)")
 lines(log(Catalan$vertices), log(fitted(nonlinear_model)), col = "green")
+ 
+
+model2 <- function(predictor,a,b){
+  a*predictor^b
+}
+ 
+model2Init <- function(mCall,LHS,data){
+  xy <- sortedXyData(mCall[["predictor"]],LHS, data)
+  lmFit <- lm(log(xy[, "y"]) ~ log(xy[, "x"]))
+  coefs <- coef(lmFit)
+  a <- exp(coefs[1])
+  b <- coefs[2]
+  value <-  c(a,b)
+  names(value) <- mCall[c("a","b")]
+  value
+}
+
+SSmodel2 <- selfStart(model1, model1Init,c("a", "b"))
+ 
+getInitial(mean_length ~ SSmodel1(vertices,a,b), data = Catalan)
+ 
+nonLinear.m1 <- nls(mean_length ~ SSmodel2(vertices,a,b), data = Catalan,trace=T)
+
+
+ 
+Modelling  <- function(language,model){
+  nonlinear_model = nls(model, data = language,trace=T)
+  
+  results = c(deviance(nonlinear_model),AIC(nonlinear_model),sqrt(deviance(nonlinear_model)/df.residual(nonlinear_model)),coef(nonlinear_model))
+  names(results) <- c(c("dev","AIC","s"),names(nonlinear_model$m$getPars()))
+  return (results)
+}
+
+ 
+Modelling(Catalan,mean_length ~ SSmodel2(vertices,a,b))
+ 
+ 
+ 
+model1 <- function(predictor,b){
+  (predictor/2)^b
+}
+model1Init <- function(mCall,LHS,data){
+  xy <- sortedXyData(mCall[["predictor"]],LHS, data)
+  lmFit <- lm(log(xy[, "y"]) ~ log(xy[, "x"]))
+  coefs <- coef(lmFit)
+  b <- coefs[1]
+  value <-  c(b)
+  names(value) <- mCall[c("b")]
+  value
+}
+SSmodel1 <- selfStart(model1, model1Init,c("b"))
+ 
+getInitial(mean_length ~ SSmodel1(vertices,b), data = Catalan)
+
+Modelling(Catalan,mean_length~SSmodel1(vertices,b))
+ 
+ 
+model3 <- function(predictor,a,c){
+  a*exp(c*predictor)
+}
+model3Init <- function(mCall,LHS,data){
+  xy <- sortedXyData(mCall[["predictor"]],LHS, data)
+  lmFit <- lm(log(xy[, "y"]) ~ xy[, "x"])
+  coefs <- coef(lmFit)
+  a <- exp(coefs[1])
+  c <- coefs[2]
+  value <-  c(a,c)
+  names(value) <- mCall[c("a","c")]
+  value
+}
+SSmodel3 <- selfStart(model3, model3Init,c("a,c"))
+ 
+getInitial(mean_length ~ SSmodel3(vertices,a,c), data = Catalan)
+
+Modelling(Catalan,mean_length ~ SSmodel3(vertices,a,c))
