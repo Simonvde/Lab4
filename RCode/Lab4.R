@@ -24,6 +24,10 @@ for (x in 1:nrow(source)) {
 
 Czech <- read.table("./data/Czech_dependency_tree_metrics.txt",
                               header = FALSE)
+Italian <- read.table("./data/Italian_dependency_tree_metrics.txt",
+                              header = FALSE)
+colnames(Italian) = c("vertices","degree_2nd_moment", "mean_length")
+
 
 plot(data[c(0,2)])
 
@@ -192,13 +196,33 @@ model2pInit <- function(mCall,LHS,data){
 
 SSmodel2p <- selfStart(model2p, model2pInit,c("a", "b","d"))
  
+ 
+# model3p <- function(predictor,a,c,d){
+#   a*exp(c*predictor)+d
+# }
+# model3pInit <- function(mCall,LHS,data){
+#   d <- 1
+#   xy <- sortedXyData(mCall[["predictor"]],LHS, data)
+#   lmFit <- lm(log(xy[, "y"]) ~ xy[, "x"])
+#   coefs <- coef(lmFit)
+#   a <- exp(coefs[1])
+#   c <- coefs[2]
+#   value <-  c(a,c,d)
+#   names(value) <- mCall[c("a","c","d")]
+#   value
+# }
+# SSmodel3p <- selfStart(model3p, model3pInit,c("a","c","d"))
+# 
+# nls(mean_length~SSmodel3p(vertices,a,c,d),data=Catalan,trace=T)
+
+ 
 models.abstract <- c(mean_length~SSmodel1(vertices,b),
             mean_length~SSmodel2(vertices,a,b),
             mean_length~SSmodel3(vertices,a,c),
             mean_length~SSmodel1p(vertices,b,d),
             mean_length~SSmodel2p(vertices,a,b,d))
 
-models <- lapply(models.abstract,function(x) nls(x,data=Catalan))
+#models <- lapply(models.abstract,function(x) nls(x,data=Catalan))
 
 modelsLanguage <- function(language){
   colnames(language) = c("vertices","degree_2nd_moment", "mean_length")
@@ -242,6 +266,13 @@ valuesType <- function(language,type){
 }
 #valuesType(Catalan,"AIC")
  
+for (x in 1:nrow(source)) {
+    language = read.table(source$file[x], header = FALSE)
+    colnames(language) <- c("vertices","degree_2nd_moment", "mean_length")
+    language = language[order(language$vertices), ]
+    print(source$language[x])
+    nls(mean_length~SSmodel3p(vertices,a,c,d),data=language)
+}
 
 
 table2 <- function(type){
@@ -260,7 +291,7 @@ table2 <- function(type){
   for (x in 1:nrow(source)) {
     output[x,] <- write_AICs(source$file[x])
   }
-  dimnames(output) <- list(source$language, c("0","1","2","3","1+","2+"))
+  dimnames(output) <- list(source$language, c("0","1","2","3","1+","2+","3+"))
   output
 }
 table2("s")
@@ -293,13 +324,38 @@ table3()
 
 # Generate plots ----------------------------------------------------------
 
- 
-colors <- c("red","green","blue","darkred","darkgreen")
-plot(Catalan$vertices,Catalan$mean_length)
-cc=0
-for(x in models){
-  cc=cc+1
-  lines(Catalan$vertices, fitted(x), col = colors[cc])
+plotAllModels <- function(language,name){
+  colors <- c("red","green","blue","darkred","darkgreen")
+  plot(language$vertices,language$mean_length,main = name)
+  cc=0
+  models <- modelsLanguage(language)
+  for(x in models){
+    cc=cc+1
+    lines(language$vertices, fitted(x), col = colors[cc])
+  }
 }
- 
+
+modelNames <- c("Model 1","Model 2","Model 3","Model 1+","Model 2+")
+#Plot best model in Log scale:
+plotAllModelsLog <- function(language,name){
+  models <- modelsLanguage(language)
+  vect <- valuesType(language,"AIC")
+  indexMinimumModel <- match(min(vect),vect)
+  minModel <- models[[indexMinimumModel-1]]
+  
+  plot(log(language$vertices),log(language$mean_length),
+       main = paste(name,modelNames[indexMinimumModel-1]),
+       xlab="log(vertices)",ylab="log(mean_length)")
+  lines(log(language$vertices), log(fitted(minModel)), col = "red")
+}
+for (x in 1:nrow(source)) {
+    language = read.table(source$file[x], header = FALSE)
+    colnames(language) <- c("vertices","degree_2nd_moment", "mean_length")
+    language = language[order(language$vertices), ]
+    
+    png(file=paste("images//bestModel_",source$language[x],".png",sep=""))
+    plotAllModelsLog(language,source$language[x])
+    dev.off()
+}
+
  
