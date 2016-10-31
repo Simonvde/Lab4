@@ -155,7 +155,7 @@ nonLinear.m1 <- nls(mean_length ~ SSmodel2(vertices,a,b), data = Catalan,trace=T
 
 
  
-Modelling  <- function(language,model){
+modelling  <- function(language,model){
   nonlinear_model = nls(model, data = language,trace=T)
   
   results = c(deviance(nonlinear_model),AIC(nonlinear_model),sqrt(deviance(nonlinear_model)/df.residual(nonlinear_model)),coef(nonlinear_model))
@@ -164,7 +164,7 @@ Modelling  <- function(language,model){
 }
 
  
-Modelling(Catalan,mean_length ~ SSmodel2(vertices,a,b))
+modelling(Catalan,mean_length ~ SSmodel2(vertices,a,b))
  
  
  
@@ -184,7 +184,7 @@ SSmodel1 <- selfStart(model1, model1Init,c("b"))
  
 getInitial(mean_length ~ SSmodel1(vertices,b), data = Catalan)
 
-Modelling(Catalan,mean_length~SSmodel1(vertices,b))
+modelling(Catalan,mean_length~SSmodel1(vertices,b))
  
  
 model3 <- function(predictor,a,c){
@@ -200,8 +200,10 @@ model3Init <- function(mCall,LHS,data){
   names(value) <- mCall[c("a","c")]
   value
 }
-SSmodel3 <- selfStart(model3, model3Init,c("a,c"))
+SSmodel3 <- selfStart(model3, model3Init,c("a","c"))
  
 getInitial(mean_length ~ SSmodel3(vertices,a,c), data = Catalan)
 
-Modelling(Catalan,mean_length ~ SSmodel3(vertices,a,c))
+modelling(Catalan,mean_length ~ SSmodel3(vertices,a,c))
+ 
+
