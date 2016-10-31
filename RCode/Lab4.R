@@ -132,41 +132,13 @@ plot(log(Catalan$vertices), log(Catalan$mean_length),
 lines(log(Catalan$vertices), log(fitted(nonlinear_model)), col = "green")
  
 
-model2 <- function(predictor,a,b){
-  a*predictor^b
-}
- 
-model2Init <- function(mCall,LHS,data){
-  xy <- sortedXyData(mCall[["predictor"]],LHS, data)
-  lmFit <- lm(log(xy[, "y"]) ~ log(xy[, "x"]))
-  coefs <- coef(lmFit)
-  a <- exp(coefs[1])
-  b <- coefs[2]
-  value <-  c(a,b)
-  names(value) <- mCall[c("a","b")]
-  value
-}
-
-SSmodel2 <- selfStart(model1, model1Init,c("a", "b"))
- 
-getInitial(mean_length ~ SSmodel1(vertices,a,b), data = Catalan)
- 
-nonLinear.m1 <- nls(mean_length ~ SSmodel2(vertices,a,b), data = Catalan,trace=T)
-
-
- 
-modelling  <- function(language,model){
-  nonlinear_model = nls(model, data = language,trace=T)
-  
+# Models ------------------------------------------------------------------
+values  <- function(nonlinear_model){
   results = c(deviance(nonlinear_model),AIC(nonlinear_model),sqrt(deviance(nonlinear_model)/df.residual(nonlinear_model)),coef(nonlinear_model))
   names(results) <- c(c("dev","AIC","s"),names(nonlinear_model$m$getPars()))
   return (results)
 }
 
- 
-modelling(Catalan,mean_length ~ SSmodel2(vertices,a,b))
- 
- 
  
 model1 <- function(predictor,b){
   (predictor/2)^b
@@ -182,9 +154,21 @@ model1Init <- function(mCall,LHS,data){
 }
 SSmodel1 <- selfStart(model1, model1Init,c("b"))
  
-getInitial(mean_length ~ SSmodel1(vertices,b), data = Catalan)
 
-modelling(Catalan,mean_length~SSmodel1(vertices,b))
+model2 <- function(predictor,a,b){
+  a*predictor^b
+}
+model2Init <- function(mCall,LHS,data){
+  xy <- sortedXyData(mCall[["predictor"]],LHS, data)
+  lmFit <- lm(log(xy[, "y"]) ~ log(xy[, "x"]))
+  coefs <- coef(lmFit)
+  a <- exp(coefs[1])
+  b <- coefs[2]
+  value <-  c(a,b)
+  names(value) <- mCall[c("a","b")]
+  value
+}
+SSmodel2 <- selfStart(model2, model2Init,c("a", "b"))
  
  
 model3 <- function(predictor,a,c){
@@ -201,9 +185,91 @@ model3Init <- function(mCall,LHS,data){
   value
 }
 SSmodel3 <- selfStart(model3, model3Init,c("a","c"))
- 
-getInitial(mean_length ~ SSmodel3(vertices,a,c), data = Catalan)
 
-modelling(Catalan,mean_length ~ SSmodel3(vertices,a,c))
+
+
+model1p <- function(predictor,b,d){
+  (predictor/2)^b+d
+}
+model1pInit <- function(mCall,LHS,data){
+  xy <- sortedXyData(mCall[["predictor"]],LHS, data)
+  lmFit <- lm(log(xy[, "y"]) ~ log(xy[, "x"]+.1))
+  print(lmFit)
+  coefs <- coef(lmFit)
+  b <- coefs[1]
+  d <- .1
+  value <-  c(b,d)
+  names(value) <- mCall[c("b","d")]
+  value
+}
+SSmodel1p <- selfStart(model1p, model1pInit,c("b","d"))
+
+  
+
+model2p <- function(predictor,a,b,d){
+  a*predictor^b+d
+}
+ 
+model2pInit <- function(mCall,LHS,data){
+  d <- .1
+  xy <- sortedXyData(mCall[["predictor"]],LHS, data)
+  lmFit <- lm(log(xy[, "y"]) ~ log(xy[, "x"]+d))
+  coefs <- coef(lmFit)
+  a <- exp(coefs[1])
+  b <- coefs[2]
+  value <-  c(a,b,d)
+  names(value) <- mCall[c("a","b","d")]
+  value
+}
+
+SSmodel2p <- selfStart(model2p, model2pInit,c("a", "b","d"))
+ 
+models.abstract <- c(mean_length~SSmodel1(vertices,b),
+            mean_length~SSmodel2(vertices,a,b),
+            mean_length~SSmodel3(vertices,a,c),
+            mean_length~SSmodel1p(vertices,b,d),
+            mean_length~SSmodel2p(vertices,a,b,d))
+ 
+models <- lapply(models.abstract,function(x) nls(x,data=Catalan))
+vals <- sapply(models,values,simplify = T)
+
  
 
+colors <- c("red","green","blue","darkred","darkgreen")
+plot(Catalan$vertices,Catalan$mean_length)
+cc=0
+for(x in models){
+  cc=cc+1
+  lines(Catalan$vertices, fitted(x), col = colors[cc])
+}
+
+runData <- function(language){
+  colnames(language) = c("vertices","degree_2nd_moment", "mean_length")
+  language = language[order(language$vertices), ]
+  models <- lapply(models.abstract,function(x) nls(x,data=language))
+  vals <- sapply(models,values,simplify = T)
+  dev <- numeric(length(models))
+  for(i in 1:length(models)){
+    dev[i] <- (vals[[i]]["dev"])
+  }
+  dev
+}
+runData(Catalan)
+ 
+output <- matrix(nrow=length(source$language),ncol=length(models))
+
+write_AICs <- function(language,file) {
+  language = read.table(file, header = FALSE)
+  return(runData(language))
+}
+
+for (x in 1:nrow(source)) {
+  output[x,] <- write_AICs(source$language[x], source$file[x])
+}
+dimnames(output) <- list(source$language, c("1","2","3","1+","2+"))
+output
+library(xtable)
+xtable(output)
+
+ 
+ 
