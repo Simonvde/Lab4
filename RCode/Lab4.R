@@ -6,6 +6,8 @@ library("VGAM")
 library("stats4")
 library(xtable)
 
+install.packages("nls2")
+library("nls2")
  
 write_summary <- function(language,file) {
   tree = read.table(file, header = FALSE)
@@ -24,6 +26,7 @@ for (x in 1:nrow(source)) {
 
 Czech <- read.table("./data/Czech_dependency_tree_metrics.txt",
                               header = FALSE)
+colnames(Czech) = c("vertices","degree_2nd_moment", "mean_length")
 Italian <- read.table("./data/Italian_dependency_tree_metrics.txt",
                               header = FALSE)
 colnames(Italian) = c("vertices","degree_2nd_moment", "mean_length")
@@ -197,30 +200,125 @@ model2pInit <- function(mCall,LHS,data){
 SSmodel2p <- selfStart(model2p, model2pInit,c("a", "b","d"))
  
  
-# model3p <- function(predictor,a,c,d){
-#   a*exp(c*predictor)+d
-# }
-# model3pInit <- function(mCall,LHS,data){
-#   d <- 1
-#   xy <- sortedXyData(mCall[["predictor"]],LHS, data)
-#   lmFit <- lm(log(xy[, "y"]) ~ xy[, "x"])
-#   coefs <- coef(lmFit)
-#   a <- exp(coefs[1])
-#   c <- coefs[2]
-#   value <-  c(a,c,d)
-#   names(value) <- mCall[c("a","c","d")]
-#   value
-# }
-# SSmodel3p <- selfStart(model3p, model3pInit,c("a","c","d"))
+model3p <- function(predictor,a,c,d){
+  a*exp(c*predictor)+d
+}
+model3pInit <- function(mCall,LHS,data){
+  d <- 0
+  xy <- sortedXyData(mCall[["predictor"]],LHS, data)
+  lmFit <- lm(log(xy[, "y"]-d) ~ (xy[, "x"]))
+  coefs <- coef(lmFit)
+  a <- exp(coefs[1])
+  c <- coefs[2]
+  value <-  c(-2,-0.1,2.5)
+  if(length(data[[1]])==25037) value <- c(a,c,-1000)
+  names(value) <- mCall[c("a","c","d")]
+  value
+}
+SSmodel3p <- selfStart(model3p, model3pInit,c("a","c","d"))
+ 
+# getInitial(mean_length~SSmodel3p(vertices,a,c,d),data=Catalan)
 # 
 # nls(mean_length~SSmodel3p(vertices,a,c,d),data=Catalan,trace=T)
+#  
+# grid.model3p<- expand.grid(list(a = seq(-3,0, by = 0.5), 
+#                                   c = seq(-1,0,by=.1),
+#                                   d = seq(2,4, by = 0.5)))
+# 
+# model3p.gridStart <- nls2(mean_length~a*exp(c*vertices)+d,data=Czech,start=grid.model3p,trace=T,algorithm="brute-force")
+#  
+# nls(mean_length~SSmodel3p(vertices,a,c,d),data=Czech,start=list(a=-2,c=-0.1,d=-1000),trace=T)
+ 
+ 
+model4 <- function(predictor,a){
+  a*log(predictor)
+}
+model4Init <- function(mCall,LHS,data){
+  value <-  c(1)
+  names(value) <- mCall[c("a")]
+  value
+}
+SSmodel4 <- selfStart(model4, model4Init,c("a"))
+ 
+ 
 
+model4p <- function(predictor,a,d){
+  a*log(predictor)+d
+}
+model4pInit <- function(mCall,LHS,data){
+  value <-  c(1,1)
+  names(value) <- mCall[c("a","d")]
+  value
+}
+SSmodel4p <- selfStart(model4p, model4pInit,c("a","d"))
+ 
+getInitial(mean_length~SSmodel4p(vertices,a,d),data=Catalan)
+ 
+grid.model4p<- expand.grid(list(a = seq(-1,1, by = .1), 
+                                  d = seq(-1,1,by=.1)))
+
+model4p.gridStart <- nls2(mean_length~model4(vertices,a,d),data=Czech,start=grid.model4,trace=T,algorithm="brute-force")
+
+nls(mean_length~SSmodel4p(vertices,a,d),data=Italian,start=list(a=1,d=1))
+  
+
+model5 <- function(predictor,a,b,c){
+  a*(predictor^b)*exp(c*predictor)
+}
+model5Init <- function(mCall,LHS,data){
+  xy <- sortedXyData(mCall[["predictor"]],LHS, data)
+  lmFit <- lm(log(xy[, "y"]) ~ (log(xy[, "x"])+xy[, "x"]))
+  coefs <- coef(lmFit)
+  a <- exp(coefs[1])
+  b <- coefs[2]
+  c <- coefs[3]
+  value <-  c(a,b,c)
+  names(value) <- mCall[c("a","b","c")]
+  value
+}
+SSmodel5 <- selfStart(model5, model5Init,c("a","b","c"))
+
+getInitial(mean_length~SSmodel5(vertices,a,b,c),data=Catalan)
+
+nls(mean_length~SSmodel5(vertices,a,b,c),data=Catalan,trace=T)
+ 
+ 
+model5p <- function(predictor,a,b,c,d){
+  a*(predictor^b)*exp(c*predictor)+d
+}
+model5pInit <- function(mCall,LHS,data){
+  xy <- sortedXyData(mCall[["predictor"]],LHS, data)
+  lmFit <- lm(log(xy[, "y"]) ~ (log(xy[, "x"])+xy[, "x"]))
+  coefs <- coef(lmFit)
+  a <- exp(coefs[1])
+  b <- coefs[2]
+  c <- coefs[3]
+  value <-  c(a,b,c,-2)
+  names(value) <- mCall[c("a","b","c","d")]
+  value
+}
+SSmodel5p <- selfStart(model5p, model5pInit,c("a","b","c","d"))
+ 
+getInitial(mean_length~SSmodel5p(vertices,a,b,c,d),data=Catalan)
+grid.model5p<- expand.grid(list(a = seq(0,3,by=1), 
+                               b=seq(.05,.3,by=.05),
+                               c=seq(0.001,0.002,by=0.001),
+                               d = seq(0,3,by=1)))
+model5p.grid <- nls2(mean_length~SSmodel5p(vertices,a,b,c,d),data=Czech,trace=T,start=grid.model5,
+                    algorithm="brute-force")
+
+nls(mean_length~SSmodel5p(vertices,a,b,c,d),data=Czech,trace=T,start=list(a = 1, b=0.25,c=0.002,d=0))
+ 
  
 models.abstract <- c(mean_length~SSmodel1(vertices,b),
             mean_length~SSmodel2(vertices,a,b),
             mean_length~SSmodel3(vertices,a,c),
             mean_length~SSmodel1p(vertices,b,d),
-            mean_length~SSmodel2p(vertices,a,b,d))
+            mean_length~SSmodel2p(vertices,a,b,d),
+            mean_length~SSmodel3p(vertices,a,c,d),
+            mean_length~SSmodel4(vertices,a),
+            mean_length~SSmodel4p(vertices,a,d),
+            mean_length~SSmodel5(vertices,a,b,c))
 
 #models <- lapply(models.abstract,function(x) nls(x,data=Catalan))
 
@@ -291,7 +389,7 @@ table2 <- function(type){
   for (x in 1:nrow(source)) {
     output[x,] <- write_AICs(source$file[x])
   }
-  dimnames(output) <- list(source$language, c("0","1","2","3","1+","2+","3+"))
+  dimnames(output) <- list(source$language, c("0","1","2","3","1+","2+","3+","4","4+","5"))
   output
 }
 table2("s")
@@ -335,7 +433,8 @@ plotAllModels <- function(language,name){
   }
 }
 
-modelNames <- c("Model 1","Model 2","Model 3","Model 1+","Model 2+")
+modelNames <- c("Model 1","Model 2","Model 3","Model 1+","Model 2+","Model 3+",
+                "Model 4","Model 4+","Model 5")
 #Plot best model in Log scale:
 plotAllModelsLog <- function(language,name){
   models <- modelsLanguage(language)
