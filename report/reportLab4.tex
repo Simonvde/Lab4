@@ -228,7 +228,7 @@ Arabic & 0.34 & 0.7 & 0.36 & 1.6 & 0.01 & 0.34 & -0.06 & 0.52 & 0.41 & 0.32 & -3
 \label{tab:par}
 \end{table}
 
-
+\newpage
 %----------------------------------------------------------------------------------------
 %	Best model plots
 %----------------------------------------------------------------------------------------
@@ -315,7 +315,6 @@ Arabic & 0.34 & 0.7 & 0.36 & 1.6 & 0.01 & 0.34 & -0.06 & 0.52 & 0.41 & 0.32 & -3
 \end{minipage}
 \end{figure}
 
-
 %----------------------------------------------------------------------------------------
 %	Comparison aggregated plots
 %----------------------------------------------------------------------------------------
@@ -349,22 +348,50 @@ Arabic & 0.34 & 0.7 & 0.36 & 1.6 & 0.01 & 0.34 & -0.06 & 0.52 & 0.41 & 0.32 & -3
   \label{fig:cat4}
 \end{minipage}
 \end{minipage}
-\caption{A comparison between the models based on the aggregated data against models based on our original data}
+\caption{A comparison between the models based on the aggregated data against models based on our original data}\label{fig:compAgg}
 \end{figure}
 
 
 %----------------------------------------------------------------------------------------
 %	Discussion
 %----------------------------------------------------------------------------------------
+\newpage
 \section{Discussion}
+\subsection{Heteroscedasticity}
 
+\paragraph{Solving Heteroscedasticity}
+After we noted that the data was not homoscedastic. We tried aggregating the data and calculating models that data. This didn't turn out well. First we had a lot of trouble with choosing the right starting values (more than when using the original data). And after we succeeded getting a working model it appeared that the approximation was really bad, see plots in Figure~\ref{fig:compAgg}, especially compared to the models on the original data.\\
 
+The aggregated data was hard to approximate, mainly because it consisted of less than $100$ points, which makes it a very sparse dataset. When we looked at the best models for this language, we noted that simpler models were strongly preferred because the RSS was a lot lower and thus the amount of parameters had a higher influence on the AIC.\\
+
+Also the aggregated data gave $1$ weight for every vertex, this means that a vertex with length $5$ will count for as much as a vertex with length $113$, while the first one might have appeared more than $100$ more than the second one. This makes the data very vulnerable for outliers. To solve this, we could add weights when calculating the non-linear model, but we ran out of time to do so.\\
+
+Because of all these problems we decided not to work with the aggregated data, but with the original data.
+
+\subsection{Languages and their best models}
+We note in all the plots of the best model that we get a best model that nicely fits the model. In the first image of Figure~\ref{fig:compAgg} we can even see that most models give a reasonably good fit. This is expected, as lots of models resemble each other.
+
+We notice immediately that the best model differs for different languages. For example, the two languages with the lowest $\mu_{n}$ and lowest $\mu_{x}$: Turkish and Chinese both prefer model $3+$. While no other languages prefers this model, nor model $3$.
+
+Depending on the language, also models $1+,2,2+,4+$ and $5$ get selected as a model. 
+
+We also noticed that, for most languages (except Catalan, Chinese and Turkish) model $5$ is very close to the best result.
+
+\subsection{Conclusions}
+So we can conclude that a combination of model $5$ and model $3+$ would lead to good best fits for all models. We also note that probably model $5+$ alone would be sufficient as well, but then we would have to tune the starting values a lot better and solve some extra issues.\\
+
+We can also conclude that for some languages the model for the mean length of the edges of the dependency tree as a function of the number of words significantly differs from the models for other languages.\\
+
+To finish we found that we have found a model with a good fit for every language.
 
 %----------------------------------------------------------------------------------------
 %	Methods
 %----------------------------------------------------------------------------------------
 \section{Methods}
+We employed several methods for finding starting values. If there was no additive term, a linear approximation was usually sufficient. When there was an additive term, this usually wasn't. So we mainly did some manual search, using the expand.grid and nls2 functions. Once a starting value was found, it usually worked for a lot of languages.\\
+When evaluating the mean data, we could evaluate a grid every time before starting, to get better results.\\
+To automate the process, we used selfstarters.\\
 
-
+After we find good starting values for the original data for almost every language and model, a few errors remained. To solve these, we adapted the maximum iterations for the model and also the tolerance and the minFactor. At last we set warnOnly True, so that we could fully automate the calculation of the best model and didn't have to worry about these errors. Running all models for all languages we get $2$ errors (for model 5+) and we consider this acceptable.
 
 \end{document}
