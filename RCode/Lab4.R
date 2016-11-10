@@ -11,40 +11,24 @@ library("nls2")
 
 write_summary <- function(language,file) {
   tree = read.table(file, header = FALSE)
-  cat(language,length(tree$V1),mean(tree$V1),sd(tree$V1),mean(tree$V3),sd(tree$V3),"\n")
+  c(length(tree$V1),mean(tree$V1),sd(tree$V1),mean(tree$V3),sd(tree$V3))
 }
 
 source = read.table("./data/languages.txt",
                     header = TRUE,               # this is to indicate the first line of the file contains the names of the columns instead of the real data
                     as.is = c("language","file") # this is need to have the cells treated as real strings and not as categorial data.
 )
+output <- matrix(nrow=length(source$language),ncol=5)
 for (x in 1:nrow(source)) {
-  write_summary(source$language[x], source$file[x])
+  output[x,] <- write_summary(source$language[x], source$file[x])
 }
+xtable(output,digits=c(rep(0,3),1,2,2))
+
 
 # Introduction (guide) ----------------------------------------------------
 
-Czech <- read.table("./data/Czech_dependency_tree_metrics.txt",
-                              header = FALSE)
-colnames(Czech) = c("vertices","degree_2nd_moment", "mean_length")
-Czech = Czech[order(Czech$vertices), ]
-Italian <- read.table("./data/Italian_dependency_tree_metrics.txt",
-                              header = FALSE)
-colnames(Italian) = c("vertices","degree_2nd_moment", "mean_length")
-
-Arabic <- read.table("./data/Arabic_dependency_tree_metrics.txt",
-                              header = FALSE)
-colnames(Arabic) = c("vertices","degree_2nd_moment", "mean_length")
-Arabic = Arabic[order(Arabic$vertices), ]
-
-
-plot(data[c(0,2)])
-
-plot(data[c(1,3)])
-
-data_n = length(data[1]$V1)
-
-
+data <- read.table("./data/Catalan_dependency_tree_metrics.txt",header = FALSE)
+data_n = length(data$V1)
 for(i in 1:data_n){
   row <- data[i,]
   n <- row$V1
@@ -61,11 +45,10 @@ for(i in 1:data_n){
   }
 }
 
-
-
 Catalan = read.table("./data/Catalan_dependency_tree_metrics.txt", header = FALSE)
 colnames(Catalan) = c("vertices","degree_2nd_moment", "mean_length")
 Catalan = Catalan[order(Catalan$vertices), ]
+
 plot(Catalan$vertices, Catalan$mean_length,
      xlab = "vertices", ylab = "mean dependency length")
 plot((log(Catalan$vertices)), log(Catalan$mean_length),
@@ -100,23 +83,6 @@ sqrt(deviance(nonlinear_model)/df.residual(nonlinear_model))
 coef(nonlinear_model)
 coef(nonlinear_model)["a"]
 coef(nonlinear_model)["b"]
-
-
-# Heteroscedasticity (useless) ------------------------------------------------------
-
-#plot(Catalan$vertices, Catalan$mean_length)
-#plot(aggregate(list(Catalan$vertices), Catalan$mean_length, mean))
-#plot(aggregate(resid(nonlinear_model),list(Catalan$vertices),mean))
-
-#plot(aggregate(resid(nonlinear_model),list(Catalan$vertices),mean))
-#plot(fitted(nonlinear_model),abs(residuals(nonlinear_model)))
-
-#plot(Catalan$mean_length,resid(nonlinear_model))
-#plot(aggregate(.1/resid(nonlinear_model),list(Catalan$mean_length),mean))
-
-#plot(log(Catalan$vertices), log(Catalan$mean_length),
-#     xlab = "log(vertices)", ylab = "log(mean dependency length)")
-#lines(log(Catalan$vertices), log(fitted(nonlinear_model)), col = "green")
 
 
 # Models ------------------------------------------------------------------
@@ -217,7 +183,7 @@ model2pInit <- function(mCall,LHS,data){
     model.grid <- nls2(mean_length~model2p(vertices,a,b,d),data=data,start=grid,algorithm="brute-force")
     vals <- model.grid$m$getPars()
   } else{
-    vals <-  c(a,b,d)
+    vals <-  c(a,b,.1)
     names(vals) <- mCall[c("a","b","d")]
   }
   vals
@@ -241,7 +207,14 @@ model3pInit <- function(mCall,LHS,data){
   } 
   else{
     value <-  c(-2,-0.1,2.5)
-    if(length(data[[1]])==25037) value <- c(a,c,-1000)
+    if(length(data[[1]])==25037){
+      xy <- sortedXyData(mCall[["predictor"]],LHS, data)
+      lmFit <- lm(log(xy[, "y"]) ~ (xy[, "x"]))
+      coefs <- coef(lmFit)
+      a <- exp(coefs[1])
+      c <- coefs[2]
+      value <- c(a,c,-1000)
+    } 
     names(value) <- mCall[c("a","c","d")]
     return(value)
   }
@@ -295,32 +268,6 @@ model5Init <- function(mCall,LHS,data){
 SSmodel5 <- selfStart(model5, model5Init,c("a","b","c"))
 
 
-
-# language = read.table(source$file[5], header = FALSE)
-#     colnames(language) <- c("vertices","degree_2nd_moment", "mean_length")
-#     language = language[order(language$vertices), ]
-#     language <- aggregate(language,list(language$vertices),mean)
-#     
-# getInitial(models.abstract[[9]],data=language)
-# nls(models.abstract[[9]],data=language,trace=T,control=nls.control(maxiter=5000))
-# nls(models.abstract[[9]],data=language,trace=T,start=list(a=1e-6,b=8,c=0.01))
-# plot(language$vertices,language$mean_length)
-# 
-# for (x in c(1:10)) {
-#     language = read.table(source$file[x], header = FALSE)
-#     colnames(language) <- c("vertices","degree_2nd_moment", "mean_length")
-#     language = language[order(language$vertices), ]
-#     
-#     #language <- aggregate(language,list(language$vertices),mean)
-#     
-#     model <- nls(mean_length~SSmodel5p(vertices,a,b,c,d),data=language,control=list(maxiter=500))
-#     plot(language$vertices,language$mean_length,main=source$language[x])
-#     lines(language$vertices, fitted(model), col = 'red')
-#     Sys.sleep(.5)
-#     #plotAllModelsLog(language,source$language[x])
-# }
-
-
 model5p <- function(predictor,a,b,c,d){
   a*(predictor^b)*exp(c*predictor)+d
 }
@@ -331,16 +278,20 @@ model5pInit <- function(mCall,LHS,data){
   a <- exp(coefs[1])
   b <- coefs[2]
   c <- coefs[3]
-  grid <- expand.grid(list(a=seq(a*2,a/2, by = -(a/2)),
-                           b = seq(b*2,b/2, by = -(b/2)),
-                           c=seq(c*4,c/2, by = -(c/2)),
-                           d = seq(-2,2,by=1)))
-  model.grid <- nls2(mean_length~model5p(vertices,a,b,c,d),data=data,start=grid,algorithm="brute-force")
-  model.grid$m$getPars()
   
-  #value <-  c(a,b,c,0)
-  #names(value) <- mCall[c("a","b","c","d")]
-  #value
+  if(length(data$vertices)<200){
+    grid <- expand.grid(list(a=seq(a*2,a/2, by = -(a/2)),
+                             b = seq(b*2,b/2, by = -(b/2)),
+                             c=seq(c*4,c/2, by = -(c/2)),
+                             d = seq(-2,2,by=1)))
+    model.grid <- nls2(mean_length~model5p(vertices,a,b,c,d),data=data,start=grid,algorithm="brute-force")
+    return(model.grid$m$getPars())
+  }
+  else{
+    value <-  c(a,b,c,0)
+    names(value) <- mCall[c("a","b","c","d")]
+    return(value)
+  }
 }
 SSmodel5p <- selfStart(model5p, model5pInit,c("a","b","c","d"))
 
@@ -391,7 +342,6 @@ tree_metrics <- function(language){
 }
 
 
-modelsValuesTypeList <- list()
 valuesType <- function(language,type,name){
   models <- modelsLanguage(language,name)
   vals <- sapply(models,values)
@@ -423,10 +373,12 @@ table2 <- function(type){
   dimnames(output) <- list(source$language, c("0","1","2","3","1+","2+","3+","4","4+","5","5+"))
   output
 }
-table2("s")
-table2("AIC")
-table2("diffAIC")
-xtable(output)
+tableS <- table2("s")
+tableAIC <- table2("AIC")
+tableDAIC <- table2("diffAIC")
+xtable(tableS,digits=2)
+xtable(tableAIC,digits=0)
+xtable(tableDAIC,digits=1)
 
 table3 <- function(){
   output <- matrix(nrow=length(source$language),ncol=23)
@@ -447,28 +399,40 @@ table3 <- function(){
   dimnames(output) <- list(source$language, parameternames)
   output
 }
-table3()
-
+table3 <- table3()
+xtable(table3,display=rep("fg",24))
 
 
 # Generate plots ----------------------------------------------------------
 
-plotAllModels <- function(language,name){
-  colors <- c("red","green","blue","darkred","darkgreen")
-  plot(language$vertices,language$mean_length,main = name)
+plotAllModelsCatalan <- function(l1,l2){
+  colors <- c("red","green","blue","darkred","darkgreen","purple","darkblue","lightblue","grey","black","lightgreen")
+  plot(l1$vertices,l1$mean_length,main = "Catalan",xlab="vertices",ylab="mean_length")
   cc=0
-  models <- modelsLanguage(language)
+  models <- modelsLanguage(l2)
   for(x in models){
     cc=cc+1
-    lines(language$vertices, fitted(x), col = colors[cc])
+    lines(l2$vertices, fitted(x), col = colors[cc])
   }
 }
+png(file=paste("images//Mean_","Catalan","1",".png", sep=""))
+plotAllModelsCatalan(Catalan,Catalan)
+dev.off()
+png(file=paste("images//Mean_","Catalan","2",".png", sep=""))
+plotAllModelsCatalan(Catalan,mean_Catalan)
+dev.off()
+png(file=paste("images//Mean_","Catalan","3",".png", sep=""))
+plotAllModelsCatalan(mean_Catalan,Catalan)
+dev.off()
+png(file=paste("images//Mean_","Catalan","4",".png", sep=""))
+plotAllModelsCatalan(mean_Catalan,mean_Catalan)
+dev.off()
+
+
 
 modelNames <- c("Model 1","Model 2","Model 3","Model 1+","Model 2+","Model 3+",
                 "Model 4","Model 4+","Model 5","Model 5+")
 #Plot best model in Log scale:
-modelsLanguageList <- list()
-vectLanguageList <- list()
 plotAllModelsLog <- function(language,name){
   models <- modelsLanguage(language)
   vect <- valuesType(language,"AIC")
@@ -496,17 +460,8 @@ for (x in 1:nrow(source)) {
     png(file=paste("images//homoscedasticity_",source$language[x],".png", sep=""))
     plotHomoscedasticity(language,source$language[x])
     dev.off()
-    
-    language <- aggregate(language,list(language$vertices),mean)
-    
-    png(file=paste("images//bestModel_",source$language[x],".png",sep=""))
+        
+    png(file=paste("images//bestModel_",source$language[x],".png",sep=""),res=130,width=800,height=800)
     plotAllModelsLog(language,source$language[x])
     dev.off()
-}
-for (x in 1:nrow(source)) {
-    language = read.table(source$file[x], header = FALSE)
-    colnames(language) <- c("vertices","degree_2nd_moment", "mean_length")
-    language = language[order(language$vertices), ]
-    language <- aggregate(language,list(language$vertices),mean)
-    plotAllModelsLog(language,source$language[x])
 }
