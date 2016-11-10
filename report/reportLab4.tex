@@ -94,9 +94,13 @@
 
 \section{Introduction}
 
+%----------------------------------------------------------------------------------------
+%	Results
+%----------------------------------------------------------------------------------------
 \section{Results}
-% latex table generated in R 3.1.2 by xtable 1.7-4 package
-% Thu Nov 10 12:53:54 2016
+%----------------------------------------------------------------------------------------
+%	Tables
+%----------------------------------------------------------------------------------------
 \begin{table}
 \begin{adjustbox}{center}
 \centering
@@ -116,7 +120,8 @@ Arabic & 9.52 & 0.66 & 0.66 & 0.72 & 0.66 & 0.66 & 0.66 & 0.68 & 0.68 & 0.65 & 0
    \bottomrule
 \end{tabular}
 \end{adjustbox}
-\caption{AIC for every model and language}
+\caption{Residual standard error for every model and language}
+\label{tab:s}
 \end{table}
 
 % latex table generated in R 3.1.2 by xtable 1.7-4 package
@@ -140,7 +145,8 @@ Arabic & 30174 & 8238 & 8217 & 9013 & 8220 & 8207 & 8278 & 8535 & 8439 & 8183 & 
    \bottomrule
 \end{tabular}
 \end{adjustbox}
-\caption{Difference in AIC with best model for every language}
+\caption{AIC for every model and language}
+\label{tab:aic}
 \end{table}
 
 
@@ -165,7 +171,8 @@ Arabic & 21991.4 & 55.0 & 34.7 & 830.4 & 37.0 & 24.3 & 95.7 & 352.2 & 255.8 & 0.
    \bottomrule
 \end{tabular}
 \end{adjustbox}
-\caption{Residual standard error for every model and language}
+\caption{Difference in AIC with best model for every language}
+\label{tab:daic}
 \end{table}
 
 % latex table generated in R 3.1.2 by xtable 1.7-4 package
@@ -188,6 +195,7 @@ Arabic & 4108 & 27 & 20.6 & 2.17 & 0.93 \\
    \bottomrule
 \end{tabular}
 \caption{Basic information}
+\label{tab:bi}
 \end{table}
 
 
@@ -217,14 +225,144 @@ Arabic & 0.34 & 0.7 & 0.36 & 1.6 & 0.01 & 0.34 & -0.06 & 0.52 & 0.41 & 0.32 & -3
 \end{tabular}
 \end{adjustbox}
 \caption{Calculated parameters for every model and language}
+\label{tab:par}
 \end{table}
 
 
+%----------------------------------------------------------------------------------------
+%	Best model plots
+%----------------------------------------------------------------------------------------
+\captionsetup{justification=centering,margin=.2cm}
+
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{bestModel_Arabic.png}
+  \captionof{figure}{The best model in a log-log plot for Arabic}
+  \label{fig:1}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{bestModel_Basque.png}
+  \captionof{figure}{The best model in a log-log plot for Basque}
+  \label{fig:2}
+\end{minipage}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{bestModel_Catalan.png}
+  \captionof{figure}{The best model in a log-log plot for Catalan}
+  \label{fig:3}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{bestModel_Chinese.png}
+  \captionof{figure}{The best model in a log-log plot for Chinese}
+  \label{fig:4}
+\end{minipage}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{bestModel_Czech.png}
+  \captionof{figure}{The best model in a log-log plot for Czech}
+  \label{fig:5}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{bestModel_English.png}
+  \captionof{figure}{The best model in a log-log plot for English}
+  \label{fig:6}
+\end{minipage}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{bestModel_Greek.png}
+  \captionof{figure}{The best model in a log-log plot for Greek}
+  \label{fig:7}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{bestModel_Hungarian.png}
+  \captionof{figure}{The best model in a log-log plot for Hungarian}
+  \label{fig:8}
+\end{minipage}
+\end{figure}
+
+
+\begin{figure}
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{bestModel_Italian.png}
+  \captionof{figure}{The best model in a log-log plot for Italian}
+  \label{fig:9}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{bestModel_Turkish.png}
+  \captionof{figure}{The best model in a log-log plot for Turkish}
+  \label{fig:10}
+\end{minipage}
+\end{figure}
+
+
+%----------------------------------------------------------------------------------------
+%	Comparison aggregated plots
+%----------------------------------------------------------------------------------------
+\begin{figure}
+\centering
+\begin{minipage}{\textwidth}
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{Mean_Catalan1}
+  \captionof*{figure}{Models based on data plotted against data}
+  \label{fig:cat1}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{Mean_Catalan2}
+  \captionof*{figure}{Models based on aggregated data plotted against data}
+  \label{fig:cat2}
+\end{minipage}
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{Mean_Catalan3}
+  \captionof*{figure}{Models based on data plotted against aggregated data}
+  \label{fig:cat3}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{Mean_Catalan4}
+  \captionof*{figure}{Models based on aggregated data plotted against aggregated data}
+  \label{fig:cat4}
+\end{minipage}
+\end{minipage}
+\caption{A comparison between the models based on the aggregated data against models based on our original data}
+\end{figure}
+
+
+%----------------------------------------------------------------------------------------
+%	Discussion
+%----------------------------------------------------------------------------------------
 \section{Discussion}
 
 
 
-
+%----------------------------------------------------------------------------------------
+%	Methods
+%----------------------------------------------------------------------------------------
 \section{Methods}
 
 
